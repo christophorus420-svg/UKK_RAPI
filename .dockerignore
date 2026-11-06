@@ -1,0 +1,12 @@
+.git
+.github
+node_modules
+tests
+.env
+.env.backup
+.env.production
+rapi_sekolah_mobile
+*.sql
+*.zip
+phpunit.xml
+

@@ -1,0 +1,52 @@
+name: rapi_sekolah_mobile
+description: "Aplikasi Mobile RAPI-Sekolah (Rencana Agenda dan Penjadwalan Terintegrasi) - Proyek UKK RPL"
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  provider: ^6.1.2
+
+  # Networking & HTTP Client
+  dio: ^5.7.0
+
+  # Penyimpanan Token Aman & SharedPreferences
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Routing Deklaratif
+  go_router: ^14.6.2
+
+  # Kalender Interaktif
+  table_calendar: ^3.1.2
+
+  # Kamera & Kompresi Gambar Sarpras
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+
+  # Format Waktu Indonesia & Tipografi Modern
+  intl: any
+  google_fonts: ^6.2.1
+
+  # Image Caching
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+

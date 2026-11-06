@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rapi_sekolah_app
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    volumes:
+      - ./storage/app/public:/var/www/html/storage/app/public
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: rapi_sekolah_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-rapi_sekolah}
+      MYSQL_USER: ${DB_USERNAME:-rapi_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-rapi_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rapi_root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+
