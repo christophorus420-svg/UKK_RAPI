@@ -894,10 +894,6 @@
                                                     <span>(Lihat Bukti Foto)</span>
                                                 </button>
                                             @endif
-                                                    class="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800">
-                                                    <span>(Lihat Foto)</span>
-                                                </button>
-                                            @endif
                                         </div>
                                     </div>
                                 </div>
