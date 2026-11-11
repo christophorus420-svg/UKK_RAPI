@@ -85,10 +85,10 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition flex flex-col justify-between overflow-hidden">
                     <div>
                         <!-- Foto Bukti Fisik Kerusakan -->
-                        @if ($item->photo_path)
+                        @if ($item->photo_url)
                             <div class="h-44 bg-slate-900/5 overflow-hidden relative group cursor-pointer"
                                 onclick="openPhotoModal({
-                                    url: '{{ asset('storage/' . $item->photo_path) }}',
+                                    url: '{{ $item->photo_url }}',
                                     room: '{{ addslashes($item->room->room_name) }}',
                                     location: '{{ addslashes($item->room->location) }}',
                                     reporter: '{{ addslashes($item->reporter->fullname) }}',
@@ -99,8 +99,9 @@
                                     description: '{{ addslashes($item->description) }}'
                                 })"
                                 title="Klik untuk melihat foto ukuran penuh">
-                                <img src="{{ asset('storage/' . $item->photo_path) }}" alt="Bukti Fisik Kerusakan"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                <img src="{{ $item->photo_url }}" alt="Bukti Fisik Kerusakan"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                    onerror="this.onerror=null; this.src='{{ asset('images/placeholder-no-image.svg') }}';">
                                 
                                 <!-- Hover Zoom Overlay -->
                                 <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition duration-200 flex flex-col items-center justify-center gap-1.5 text-white">
@@ -169,11 +170,11 @@
                                 "{{ $item->description }}"
                             </p>
 
-                            @if ($item->photo_path)
+                            @if ($item->photo_url)
                                 <div class="mt-2.5">
                                     <button type="button"
                                         onclick="openPhotoModal({
-                                            url: '{{ asset('storage/' . $item->photo_path) }}',
+                                            url: '{{ $item->photo_url }}',
                                             room: '{{ addslashes($item->room->room_name) }}',
                                             location: '{{ addslashes($item->room->location) }}',
                                             reporter: '{{ addslashes($item->reporter->fullname) }}',

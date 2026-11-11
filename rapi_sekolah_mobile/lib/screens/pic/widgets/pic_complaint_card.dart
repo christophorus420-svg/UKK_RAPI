@@ -214,6 +214,20 @@ class PicComplaintCard extends StatelessWidget {
                           color: AppColors.surfaceVariant,
                           child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                         ),
+                        errorWidget: (_, __, ___) => Container(
+                          height: 110,
+                          color: AppColors.surfaceVariant,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image_not_supported_outlined, color: AppColors.textMuted, size: 24),
+                                SizedBox(height: 4),
+                                Text('Foto tidak dapat dimuat', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -235,6 +249,26 @@ class PicComplaintCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.no_photography_outlined, size: 15, color: AppColors.textMuted),
+                    SizedBox(width: 6),
+                    Text(
+                      'Tanpa lampiran foto dari pelapor.',
+                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
                 ),
               ),
             ],

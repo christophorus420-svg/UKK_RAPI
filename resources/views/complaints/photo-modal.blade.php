@@ -23,7 +23,8 @@
 
         <!-- Body Modal: Gambar Resolusi Penuh -->
         <div class="flex-1 overflow-auto bg-slate-950 flex items-center justify-center p-3 sm:p-5 min-h-[240px] max-h-[58vh]">
-            <img id="modalPhotoImage" src="" alt="Bukti Foto Kerusakan" class="max-h-full max-w-full object-contain rounded-lg shadow-xl">
+            <img id="modalPhotoImage" src="" alt="Bukti Foto Kerusakan" class="max-h-full max-w-full object-contain rounded-lg shadow-xl"
+                onerror="this.onerror=null; this.src='{{ asset('images/placeholder-no-image.svg') }}';">
         </div>
 
         <!-- Footer Modal: Keterangan & Detail Laporan -->

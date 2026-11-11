@@ -1,3 +1,4 @@
+import '../../core/config/app_config.dart';
 import '../../core/utils/date_formatter.dart';
 
 /// Model Data Pengaduan Kerusakan Sarpras Sekolah (ComplaintModel)
@@ -44,11 +45,14 @@ class ComplaintModel {
       } catch (_) {}
     }
 
+    final rawPhotoUrl = json['photo_url']?.toString();
+    final rawPhotoPath = json['photo_path']?.toString();
+
     return ComplaintModel(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
       description: json['description']?.toString() ?? '',
       statusRepair: json['status_repair']?.toString() ?? (json['status']?.toString() ?? 'Belum Diperbaiki'),
-      photoUrl: json['photo_url']?.toString(),
+      photoUrl: _resolvePhotoUrl(rawPhotoUrl, rawPhotoPath),
       isOverdue: json['is_overdue'] == true || json['is_overdue'] == 1,
       createdAt: parsedDate,
       repairedAt: parsedRepairedAt,
@@ -57,6 +61,37 @@ class ComplaintModel {
       room: ComplaintRoomModel.fromJson(json['room'] as Map<String, dynamic>? ?? {}),
       reporter: ComplaintReporterModel.fromJson(json['reporter'] as Map<String, dynamic>? ?? {}),
     );
+  }
+
+  static String? _resolvePhotoUrl(String? rawUrl, String? rawPath) {
+    String? url = (rawUrl != null && rawUrl.trim().isNotEmpty) ? rawUrl.trim() : null;
+
+    if (url == null && rawPath != null && rawPath.trim().isNotEmpty) {
+      final cleanPath = rawPath.trim().replaceFirst(RegExp(r'^/+'), '');
+      url = cleanPath.startsWith('storage/') ? cleanPath : 'storage/$cleanPath';
+    }
+
+    if (url == null || url.isEmpty) {
+      return null;
+    }
+
+    final baseUri = Uri.tryParse(AppConfig.baseUrl);
+    final origin = baseUri != null
+        ? '${baseUri.scheme}://${baseUri.host}${baseUri.hasPort ? ':${baseUri.port}' : ''}'
+        : '';
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      final clean = url.startsWith('/') ? url : '/$url';
+      return origin.isNotEmpty ? '$origin$clean' : clean;
+    }
+
+    final parsed = Uri.tryParse(url);
+    if (parsed != null && (parsed.host == 'localhost' || parsed.host == '127.0.0.1') && origin.isNotEmpty) {
+      final portSuffix = parsed.hasPort ? ':${parsed.port}' : '';
+      return url.replaceFirst('${parsed.scheme}://${parsed.host}$portSuffix', origin);
+    }
+
+    return url;
   }
 
   // Getters Status Siklus Perbaikan

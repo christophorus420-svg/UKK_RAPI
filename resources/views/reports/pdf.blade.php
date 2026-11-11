@@ -188,11 +188,18 @@
 <body>
 
     <!-- Header Kop Surat -->
-    <div class="header-kop">
-        <h2>PEMERINTAH DAERAH PROVINSI - DINAS PENDIDIKAN</h2>
-        <h3>SMK / SISTEM INFORMASI SARANA & PRASARANA (RAPI-SEKOLAH)</h3>
-        <p>Jl. Pendidikan No. 45, Kompleks Sarpras Terpadu | Telp: (021) 7891234 | Email: sarpras@sekolah.sch.id</p>
-    </div>
+    <table style="width: 100%; border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
+        <tr>
+            <td style="width: 55px; vertical-align: middle; text-align: left;">
+                <img src="{{ public_path('images/logo.png') }}" style="width: 48px; height: 48px; object-fit: contain;">
+            </td>
+            <td style="text-align: center; vertical-align: middle; padding-right: 55px;">
+                <h2 style="font-size: 11px; font-weight: bold; margin: 0 0 2px 0; color: #0f172a; text-transform: uppercase;">PEMERINTAH DAERAH DAERAH ISTIMEWA YOGYAKARTA</h2>
+                <h3 style="font-size: 13px; font-weight: bold; margin: 0 0 2px 0; color: #1e3a8a; text-transform: uppercase;">SMK NEGERI 1 BANTUL</h3>
+                <p style="font-size: 8px; color: #475569; margin: 0;">Sistem Informasi Agenda & Sarana Prasarana (RAPI-Sekolah) | Sabdodadi, Bantul, DIY</p>
+            </td>
+        </tr>
+    </table>
 
     <!-- Judul Laporan -->
     <div class="report-title-box">

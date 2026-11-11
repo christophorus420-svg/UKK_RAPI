@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Beranda') - RAPI-Sekolah</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
     <!-- Tailwind CSS CDN & Font -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,12 +29,10 @@
                 <!-- Brand Logo -->
                 <div class="flex items-center gap-3">
                     <a href="{{ Auth::check() ? route('dashboard') : url('/') }}" class="flex items-center gap-2.5">
-                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                            RP
-                        </div>
+                        <img src="{{ asset('images/logo.png') }}" alt="Logo SMK Negeri 1 Bantul" class="w-10 h-10 object-contain drop-shadow-sm">
                         <div>
                             <div class="font-bold text-slate-900 leading-tight">RAPI-Sekolah</div>
-                            <div class="text-xs text-slate-500">Agenda & Sarpras Terpadu</div>
+                            <div class="text-xs text-slate-500">SMK Negeri 1 Bantul</div>
                         </div>
                     </a>
                 </div>

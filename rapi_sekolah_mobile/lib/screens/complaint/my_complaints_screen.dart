@@ -318,7 +318,16 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> with SingleTick
                               errorWidget: (_, __, ___) => Container(
                                 height: 120,
                                 color: AppColors.surfaceVariant,
-                                child: const Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image_not_supported_outlined, color: AppColors.textMuted, size: 28),
+                                      SizedBox(height: 4),
+                                      Text('Foto tidak dapat dimuat', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                             Container(
@@ -341,6 +350,26 @@ class _MyComplaintsScreenState extends State<MyComplaintsScreen> with SingleTick
                             ),
                           ],
                         ),
+                      ),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.no_photography_outlined, size: 16, color: AppColors.textMuted),
+                          SizedBox(width: 6),
+                          Text(
+                            'Laporan ini dikirim tanpa lampiran foto bukti.',
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                     ),
                   ],

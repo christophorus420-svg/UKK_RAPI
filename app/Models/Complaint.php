@@ -23,6 +23,10 @@ class Complaint extends Model
         'reported_at',
     ];
 
+    protected $appends = [
+        'photo_url',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -130,7 +134,18 @@ class Complaint extends Model
 
     public function getPhotoUrlAttribute(): ?string
     {
-        return $this->photo_path ? asset('storage/' . $this->photo_path) : null;
+        if (!$this->photo_path) {
+            return null;
+        }
+
+        $cleanPath = ltrim($this->photo_path, '/');
+
+        // Gunakan host dan skema dari request aktif agar URL foto otomatis cocok dengan IP LAN/domain client
+        if (request()->hasHeader('host')) {
+            return request()->schemeAndHttpHost() . '/storage/' . $cleanPath;
+        }
+
+        return asset('storage/' . $cleanPath);
     }
 
     /**

@@ -355,10 +355,10 @@
                             @endphp
                             <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <div class="flex items-start gap-3 flex-1">
-                                    @if ($komplain->photo_path)
+                                    @if ($komplain->photo_url)
                                         <button type="button"
                                             onclick="openPhotoModal({
-                                                url: '{{ asset('storage/' . $komplain->photo_path) }}',
+                                                url: '{{ $komplain->photo_url }}',
                                                 room: '{{ addslashes($komplain->room->room_name) }}',
                                                 location: '{{ addslashes($komplain->room->location) }}',
                                                 reporter: '{{ addslashes($komplain->reporter->fullname) }}',
@@ -370,11 +370,18 @@
                                             })"
                                             class="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-slate-300 relative group cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
                                             title="Klik untuk melihat bukti foto">
-                                            <img src="{{ asset('storage/' . $komplain->photo_path) }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                                            <img src="{{ $komplain->photo_url }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                                                onerror="this.onerror=null; this.src='{{ asset('images/placeholder-no-image.svg') }}';">
                                             <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                             </div>
                                         </button>
+                                    @else
+                                        <div class="shrink-0 w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400" title="Tanpa Lampiran Foto">
+                                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
                                     @endif
                                     <div>
                                         <div class="font-bold text-slate-900">{{ $komplain->room->room_name }}</div>
@@ -382,10 +389,10 @@
                                         <div class="text-[11px] text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
                                             <span>PIC: <strong class="text-slate-700">{{ $komplain->handler?->fullname ?? $komplain->room->pic->fullname }}</strong></span>
                                             <span>• Dilaporkan {{ \Carbon\Carbon::parse($komplain->reported_at)->diffForHumans() }}</span>
-                                            @if ($komplain->photo_path)
+                                            @if ($komplain->photo_url)
                                                 <button type="button"
                                                     onclick="openPhotoModal({
-                                                        url: '{{ asset('storage/' . $komplain->photo_path) }}',
+                                                        url: '{{ $komplain->photo_url }}',
                                                         room: '{{ addslashes($komplain->room->room_name) }}',
                                                         location: '{{ addslashes($komplain->room->location) }}',
                                                         reporter: '{{ addslashes($komplain->reporter->fullname) }}',
@@ -610,10 +617,10 @@
                             @endphp
                             <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div class="flex items-start gap-3 flex-1">
-                                    @if ($c->photo_path)
+                                    @if ($c->photo_url)
                                         <button type="button"
                                             onclick="openPhotoModal({
-                                                url: '{{ asset('storage/' . $c->photo_path) }}',
+                                                url: '{{ $c->photo_url }}',
                                                 room: '{{ addslashes($c->room->room_name) }}',
                                                 location: '{{ addslashes($c->room->location) }}',
                                                 reporter: '{{ addslashes($c->reporter->fullname) }}',
@@ -625,21 +632,28 @@
                                             })"
                                             class="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-slate-300 relative group cursor-pointer hover:ring-2 hover:ring-amber-400 transition"
                                             title="Klik untuk melihat bukti foto">
-                                            <img src="{{ asset('storage/' . $c->photo_path) }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                                            <img src="{{ $c->photo_url }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                                                onerror="this.onerror=null; this.src='{{ asset('images/placeholder-no-image.svg') }}';">
                                             <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                             </div>
                                         </button>
+                                    @else
+                                        <div class="shrink-0 w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400" title="Tanpa Lampiran Foto">
+                                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
                                     @endif
                                     <div>
                                         <div class="font-bold text-slate-900">{{ $c->room->room_name }}</div>
                                         <div class="text-slate-600 mt-0.5">{{ $c->description }}</div>
                                         <div class="text-[11px] text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
                                             <span>Pelapor: {{ $c->reporter->fullname }} • {{ \Carbon\Carbon::parse($c->reported_at)->diffForHumans() }}</span>
-                                            @if ($c->photo_path)
+                                            @if ($c->photo_url)
                                                 <button type="button"
                                                     onclick="openPhotoModal({
-                                                        url: '{{ asset('storage/' . $c->photo_path) }}',
+                                                        url: '{{ $c->photo_url }}',
                                                         room: '{{ addslashes($c->room->room_name) }}',
                                                         location: '{{ addslashes($c->room->location) }}',
                                                         reporter: '{{ addslashes($c->reporter->fullname) }}',
@@ -830,10 +844,10 @@
                             @endphp
                             <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex items-center justify-between gap-3">
                                 <div class="flex items-start gap-3 flex-1">
-                                    @if ($aduan->photo_path)
+                                    @if ($aduan->photo_url)
                                         <button type="button"
                                             onclick="openPhotoModal({
-                                                url: '{{ asset('storage/' . $aduan->photo_path) }}',
+                                                url: '{{ $aduan->photo_url }}',
                                                 room: '{{ addslashes($aduan->room->room_name) }}',
                                                 location: '{{ addslashes($aduan->room->location) }}',
                                                 reporter: '{{ addslashes($aduan->reporter->fullname) }}',
@@ -845,21 +859,28 @@
                                             })"
                                             class="shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-slate-300 relative group cursor-pointer hover:ring-2 hover:ring-rose-400 transition"
                                             title="Klik untuk melihat bukti foto">
-                                            <img src="{{ asset('storage/' . $aduan->photo_path) }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200">
+                                            <img src="{{ $aduan->photo_url }}" alt="Foto" class="w-full h-full object-cover group-hover:scale-110 transition duration-200"
+                                                onerror="this.onerror=null; this.src='{{ asset('images/placeholder-no-image.svg') }}';">
                                             <div class="absolute inset-0 bg-slate-900/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
                                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                             </div>
                                         </button>
+                                    @else
+                                        <div class="shrink-0 w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400" title="Tanpa Lampiran Foto">
+                                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
                                     @endif
                                     <div>
                                         <div class="font-bold text-slate-900">{{ $aduan->room->room_name }}</div>
                                         <div class="text-slate-600 mt-0.5 line-clamp-1">{{ $aduan->description }}</div>
                                         <div class="text-[11px] text-slate-400 mt-1 flex flex-wrap items-center gap-1.5">
                                             <span>{{ \Carbon\Carbon::parse($aduan->reported_at)->diffForHumans() }}</span>
-                                            @if ($aduan->photo_path)
+                                            @if ($aduan->photo_url)
                                                 <button type="button"
                                                     onclick="openPhotoModal({
-                                                        url: '{{ asset('storage/' . $aduan->photo_path) }}',
+                                                        url: '{{ $aduan->photo_url }}',
                                                         room: '{{ addslashes($aduan->room->room_name) }}',
                                                         location: '{{ addslashes($aduan->room->location) }}',
                                                         reporter: '{{ addslashes($aduan->reporter->fullname) }}',
@@ -869,6 +890,10 @@
                                                         time: '{{ \Carbon\Carbon::parse($aduan->reported_at)->translatedFormat('d F Y, H:i') }} WIB',
                                                         description: '{{ addslashes($aduan->description) }}'
                                                     })"
+                                                    class="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800">
+                                                    <span>(Lihat Bukti Foto)</span>
+                                                </button>
+                                            @endif
                                                     class="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-800">
                                                     <span>(Lihat Foto)</span>
                                                 </button>

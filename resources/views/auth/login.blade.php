@@ -10,12 +10,12 @@
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <!-- Header Card -->
             <div class="p-6 sm:p-8 bg-gradient-to-br from-blue-600 to-indigo-700 text-white text-center">
-                <div class="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl font-black border border-white/20 shadow-inner">
-                    RP
+                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 p-2 shadow-md border border-white/20">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo SMK Negeri 1 Bantul" class="w-full h-full object-contain">
                 </div>
                 <h1 class="text-xl sm:text-2xl font-bold tracking-tight">RAPI-Sekolah</h1>
                 <p class="text-blue-100 text-xs sm:text-sm mt-1">
-                    Rencana Agenda dan Penjadwalan Terintegrasi
+                    SMK Negeri 1 Bantul — Agenda & Sarpras Terpadu
                 </p>
             </div>
 

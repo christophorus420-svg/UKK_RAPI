@@ -105,7 +105,30 @@ class ComplaintApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Laporan kerusakan berhasil dikirim.',
-            'data' => $complaint,
+            'data' => [
+                'id' => $complaint->id,
+                'room' => [
+                    'id' => $complaint->room?->id,
+                    'name' => $complaint->room?->room_name,
+                    'location' => $complaint->room?->location,
+                    'pic_name' => $complaint->room?->pic?->fullname,
+                    'pic_whatsapp' => $complaint->room?->pic?->whatsapp_number,
+                ],
+                'reporter' => [
+                    'id' => $complaint->reporter?->id,
+                    'fullname' => $complaint->reporter?->fullname,
+                ],
+                'description' => $complaint->description,
+                'status_repair' => $complaint->status_repair,
+                'status' => $complaint->status_repair,
+                'photo_url' => $complaint->photo_url,
+                'photo_path' => $complaint->photo_path,
+                'is_overdue' => $complaint->isOverdue(),
+                'repaired_at' => $complaint->repaired_at?->toIso8601String(),
+                'auto_delete_remaining' => $complaint->auto_delete_remaining,
+                'can_delete' => true,
+                'created_at' => $complaint->created_at->toIso8601String(),
+            ],
         ], 201);
     }
 
@@ -144,6 +167,7 @@ class ComplaintApiController extends Controller
         }
 
         $complaint->update($dataToUpdate);
+        $complaint->load(['room.pic', 'reporter']);
 
         $message = 'Status siklus perbaikan berhasil diperbarui ke: ' . $validated['status'];
         if ($validated['status'] === 'Sudah Diperbaiki') {
