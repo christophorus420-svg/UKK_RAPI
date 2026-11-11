@@ -292,22 +292,47 @@ class PicComplaintCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    UpdateStatusSheet.show(
-                      context: context,
-                      complaint: complaint,
-                      onStatusUpdated: onUpdateStatus,
-                    );
-                  },
-                  icon: const Icon(Icons.edit_note_rounded, size: 16),
-                  label: const Text('Ubah Status'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                if (complaint.isFinished)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(Icons.lock_outline_rounded, size: 14, color: AppColors.success),
+                        SizedBox(width: 4),
+                        Text(
+                          'Terkunci',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      UpdateStatusSheet.show(
+                        context: context,
+                        complaint: complaint,
+                        onStatusUpdated: onUpdateStatus,
+                      );
+                    },
+                    icon: const Icon(Icons.edit_note_rounded, size: 16),
+                    label: const Text('Ubah Status'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
               ],
             ),
           ],

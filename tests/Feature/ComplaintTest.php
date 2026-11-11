@@ -359,4 +359,28 @@ class ComplaintTest extends TestCase
         $this->artisan('complaints:purge-resolved')
             ->assertSuccessful();
     }
+
+    public function test_status_sudah_diperbaiki_terkunci_dan_dilarang_diubah_lagi(): void
+    {
+        $complaint = Complaint::create([
+            'room_id' => $this->labRpl1->id,
+            'reporter_id' => $this->guru->id,
+            'description' => 'Gagang pintu lab patah.',
+            'photo_path' => null,
+            'status_repair' => 'Sudah Diperbaiki',
+            'handler_id' => $this->picBudi->id,
+            'reported_at' => now(),
+            'repaired_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->picBudi)->patch("/pengaduan/{$complaint->id}/status", [
+            'status_repair' => 'Belum Diperbaiki',
+        ]);
+
+        $response->assertSessionHas('error', 'Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.');
+        $complaint->refresh();
+        $this->assertEquals('Sudah Diperbaiki', $complaint->status_repair);
+
+        $complaint->delete();
+    }
 }

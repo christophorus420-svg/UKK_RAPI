@@ -126,6 +126,11 @@ class ComplaintController extends Controller
             return back()->with('error', "Akses ditolak: Anda bukan staf PIC yang ditugaskan mengelola ruangan '{$complaint->room->room_name}'.");
         }
 
+        // Pengaduan yang sudah berstatus 'Sudah Diperbaiki' terkunci dan tidak dapat diubah lagi
+        if ($complaint->status_repair === 'Sudah Diperbaiki') {
+            return back()->with('error', 'Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.');
+        }
+
         // REVISI PIC 4: Tangani keterangan perbaikan saat status diperbarui
         $dataToUpdate = [
             'status_repair' => $request->status_repair,

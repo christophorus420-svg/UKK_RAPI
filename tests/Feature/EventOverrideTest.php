@@ -178,4 +178,71 @@ class EventOverrideTest extends TestCase
         $response->assertSee($this->room2->room_name);
         $response->assertSee($alasan);
     }
+
+    public function test_pemindahan_ruangan_mengirim_notifikasi_whatsapp_ke_peminjam(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            '*' => \Illuminate\Support\Facades\Http::response(['status' => true, 'message' => 'Terkirim'], 200),
+        ]);
+
+        config(['services.whatsapp.token' => 'dummy_token_test']);
+
+        $this->guru->update(['phone_number' => '081299887766']);
+
+        $event = Event::create([
+            'room_id' => $this->room1->id,
+            'pic_id' => $this->guru->id,
+            'event_name' => 'Simulasi Gladi Bersih',
+            'date' => $this->testDate,
+            'start_time' => '08:00:00',
+            'end_time' => '11:00:00',
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/agenda/{$event->id}/pindah-ruang", [
+            'new_room_id' => $this->room2->id,
+            'move_reason' => 'Perbaikan instalasi listrik mendadak.',
+        ]);
+
+        $response->assertRedirect('/agenda');
+        $response->assertSessionHas('success');
+
+        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+            return str_contains($request['message'], 'Simulasi Gladi Bersih')
+                && str_contains($request['message'], 'Lab Komputer RPL 1')
+                && str_contains($request['message'], 'Lab Komputer RPL 2');
+        });
+    }
+
+    public function test_pemindahan_ruangan_tetap_berhasil_meskipun_wa_gagal(): void
+    {
+        \Illuminate\Support\Facades\Http::fake([
+            '*' => \Illuminate\Support\Facades\Http::response(['status' => false, 'message' => 'Gateway timeout'], 500),
+        ]);
+
+        config(['services.whatsapp.token' => 'dummy_token_test']);
+
+        $event = Event::create([
+            'room_id' => $this->room1->id,
+            'pic_id' => $this->guru->id,
+            'event_name' => 'Rapat Pembina Ekstrakurikuler',
+            'date' => $this->testDate,
+            'start_time' => '13:00:00',
+            'end_time' => '15:00:00',
+            'status' => 'approved',
+        ]);
+
+        $response = $this->actingAs($this->admin)->post("/agenda/{$event->id}/pindah-ruang", [
+            'new_room_id' => $this->room2->id,
+            'move_reason' => 'Dipindahkan ke ruangan berkapasitas lebih besar.',
+        ]);
+
+        // Perpindahan tetap berhasil di database
+        $response->assertRedirect('/agenda');
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('events', [
+            'id' => $event->id,
+            'room_id' => $this->room2->id,
+        ]);
+    }
 }

@@ -233,48 +233,62 @@
                     <!-- Footer Card: Pembaruan Status PIC & Eskalasi WA Admin -->
                     <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-col gap-2.5">
                         @if ($bisaKelolaStatus)
-                            <!-- Khusus Staf PIC Ruangan: Form Pembaruan Siklus Perbaikan -->
-                            <div class="space-y-2">
-                                <div class="text-[10px] font-semibold text-slate-500 uppercase flex items-center justify-between">
-                                    <span>Status Siklus Perbaikan (PIC):</span>
+                            @if ($item->status_repair === 'Sudah Diperbaiki')
+                                <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800 flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-emerald-900 block leading-tight">Status Perbaikan Terkunci</span>
+                                        <span class="text-[11px] text-emerald-700">Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya lagi.</span>
+                                    </div>
                                 </div>
-                                <form method="POST" action="{{ route('complaints.update-status', $item) }}" class="space-y-2">
-                                    @csrf
-                                    @method('PATCH')
-                                    <div class="flex items-center gap-1.5">
-                                        <select name="status_repair" id="select-status-{{ $item->id }}"
-                                            onchange="toggleRepairNotes('{{ $item->id }}')"
-                                            class="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500">
-                                            <option value="Belum Diperbaiki" {{ $item->status_repair === 'Belum Diperbaiki' ? 'selected' : '' }}>Belum Diperbaiki</option>
-                                            <option value="Menunggu Spare Part" {{ $item->status_repair === 'Menunggu Spare Part' ? 'selected' : '' }}>Menunggu Spare Part</option>
-                                            <option value="Sudah Diperbaiki" {{ $item->status_repair === 'Sudah Diperbaiki' ? 'selected' : '' }}>Sudah Diperbaiki</option>
-                                        </select>
-                                        <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shrink-0 shadow-xs">
-                                            Simpan
-                                        </button>
+                            @else
+                                <!-- Khusus Staf PIC Ruangan: Form Pembaruan Siklus Perbaikan -->
+                                <div class="space-y-2">
+                                    <div class="text-[10px] font-semibold text-slate-500 uppercase flex items-center justify-between">
+                                        <span>Status Siklus Perbaikan (PIC):</span>
                                     </div>
+                                    <form method="POST" action="{{ route('complaints.update-status', $item) }}" class="space-y-2">
+                                        @csrf
+                                        @method('PATCH')
+                                        <div class="flex items-center gap-1.5">
+                                            <select name="status_repair" id="select-status-{{ $item->id }}"
+                                                onchange="toggleRepairNotes('{{ $item->id }}')"
+                                                class="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-blue-500">
+                                                <option value="Belum Diperbaiki" {{ $item->status_repair === 'Belum Diperbaiki' ? 'selected' : '' }}>Belum Diperbaiki</option>
+                                                <option value="Menunggu Spare Part" {{ $item->status_repair === 'Menunggu Spare Part' ? 'selected' : '' }}>Menunggu Spare Part</option>
+                                                <option value="Sudah Diperbaiki">Sudah Diperbaiki</option>
+                                            </select>
+                                            <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shrink-0 shadow-xs">
+                                                Simpan
+                                            </button>
+                                        </div>
 
-                                    <!-- Form Keterangan Perbaikan Khusus saat Sudah Diperbaiki (REVISI PIC 4) -->
-                                    <div id="repair-notes-box-{{ $item->id }}" class="{{ $item->status_repair === 'Sudah Diperbaiki' ? '' : 'hidden' }} p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 space-y-2">
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">
-                                                Keterangan Perbaikan (Apa yang diperbaiki?):
-                                            </label>
-                                            <textarea name="repair_notes" rows="2"
-                                                placeholder="Contoh: Mengganti kabel adaptor projector dan membersihkan saringan kipas..."
-                                                class="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500">{{ old('repair_notes', $item->repair_notes) }}</textarea>
+                                        <!-- Form Keterangan Perbaikan Khusus saat Sudah Diperbaiki (REVISI PIC 4) -->
+                                        <div id="repair-notes-box-{{ $item->id }}" class="hidden p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 space-y-2">
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">
+                                                    Keterangan Perbaikan (Apa yang diperbaiki?):
+                                                </label>
+                                                <textarea name="repair_notes" rows="2"
+                                                    placeholder="Contoh: Mengganti kabel adaptor projector dan membersihkan saringan kipas..."
+                                                    class="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500">{{ old('repair_notes', $item->repair_notes) }}</textarea>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">
+                                                    Waktu/Tanggal Selesai Perbaikan:
+                                                </label>
+                                                <input type="datetime-local" name="repaired_at"
+                                                    value="{{ date('Y-m-d\TH:i') }}"
+                                                    class="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500">
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label class="block text-[10px] font-bold text-emerald-900 mb-0.5">
-                                                Waktu/Tanggal Selesai Perbaikan:
-                                            </label>
-                                            <input type="datetime-local" name="repaired_at"
-                                                value="{{ $item->repaired_at ? \Carbon\Carbon::parse($item->repaired_at)->format('Y-m-d\TH:i') : date('Y-m-d\TH:i') }}"
-                                                class="w-full px-2.5 py-1.5 bg-white border border-emerald-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500">
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
+                                    </form>
+                                </div>
+                            @endif
                         @elseif ($isAdmin)
                             <!-- Khusus Admin: Pemantauan & Kirim Peringatan WhatsApp ke PIC -->
                             <div class="space-y-2">

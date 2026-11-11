@@ -25,6 +25,16 @@ class UpdateComplaintStatusRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $complaint = $this->route('complaint');
+            if ($complaint && $complaint->status_repair === 'Sudah Diperbaiki') {
+                $validator->errors()->add('status_repair', 'Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [

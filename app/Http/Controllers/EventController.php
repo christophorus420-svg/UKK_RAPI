@@ -7,11 +7,13 @@ use App\Http\Requests\StoreEventRequest;
 use App\Models\BookingSession;
 use App\Models\Event;
 use App\Models\Room;
+use App\Services\WhatsAppService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class EventController extends Controller
@@ -311,7 +313,7 @@ class EventController extends Controller
     /**
      * Eksekusi hak veto Waka untuk memindahkan ruangan agenda dengan catatan alasan mutlak
      */
-    public function moveRoom(MoveRoomRequest $request, Event $event): RedirectResponse
+    public function moveRoom(MoveRoomRequest $request, Event $event, WhatsAppService $whatsAppService): RedirectResponse
     {
         $ruangLama = $event->room->room_name;
         $ruangBaru = Room::findOrFail($request->new_room_id);
@@ -322,7 +324,15 @@ class EventController extends Controller
             'approved_by' => Auth::id(),
         ]);
 
+        // REVISI 3: Kirim notifikasi WhatsApp ke peminjam saat perpindahan ruangan berhasil disimpan
+        try {
+            $event->load(['user', 'room']);
+            $whatsAppService->sendRoomMovedNotification($event, $ruangLama, $ruangBaru);
+        } catch (\Throwable $e) {
+            Log::error("Pengecualian notifikasi WA perpindahan ruangan agenda #{$event->id}: " . $e->getMessage());
+        }
+
         return redirect()->route('events.index')
-            ->with('success', "Hak veto Waka berhasil dijalankan: Agenda '{$event->event_name}' dipindahkan dari '{$ruangLama}' ke '{$ruangBaru->room_name}'. Notifikasi alasan pemindahan telah dicatat dan akan tampil pada pemohon ({$event->user->fullname}).");
+            ->with('success', "Hak veto Waka berhasil dijalankan: Agenda '{$event->event_name}' dipindahkan dari '{$ruangLama}' ke '{$ruangBaru->room_name}'. Notifikasi alasan pemindahan telah dicatat dan dikirimkan ke peminjam ({$event->user->fullname}).");
     }
 }

@@ -20,6 +20,16 @@ class UpdateStatusSheet extends StatefulWidget {
     required ComplaintModel complaint,
     required Function(String newStatus) onStatusUpdated,
   }) {
+    if (complaint.isFinished) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -46,6 +56,17 @@ class _UpdateStatusSheetState extends State<UpdateStatusSheet> {
   }
 
   Future<void> _handleSave() async {
+    if (widget.complaint.isFinished) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      Navigator.pop(context);
+      return;
+    }
+
     if (_selectedStatus == widget.complaint.statusRepair) {
       Navigator.pop(context);
       return;

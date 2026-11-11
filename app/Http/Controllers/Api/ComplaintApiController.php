@@ -153,6 +153,14 @@ class ComplaintApiController extends Controller
             ], 403);
         }
 
+        // Pengaduan yang sudah berstatus 'Sudah Diperbaiki' terkunci dan tidak dapat diubah lagi
+        if ($complaint->status_repair === 'Sudah Diperbaiki') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengaduan yang sudah diperbaiki tidak dapat diubah statusnya.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'status' => ['required', Rule::in(['Belum Diperbaiki', 'Menunggu Spare Part', 'Sudah Diperbaiki'])],
         ]);
