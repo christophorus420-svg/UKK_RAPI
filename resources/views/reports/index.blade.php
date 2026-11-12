@@ -243,9 +243,9 @@
                             <span class="font-bold text-slate-800">{{ $event->room ? $event->room->room_name : '-' }}</span>
                         </td>
                         <td class="py-3.5 px-4 whitespace-nowrap">
-                            @if ($event->session)
-                                <div class="font-semibold text-blue-700">{{ $event->session->session_name }}</div>
-                                <div class="text-[11px] text-slate-500">{{ substr($event->session->start_time, 0, 5) }} - {{ substr($event->session->end_time, 0, 5) }}</div>
+                            @if ($event->session_label)
+                                <div class="font-semibold text-blue-700">{{ $event->session_label }}</div>
+                                <div class="text-[11px] text-slate-500">{{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }}</div>
                             @else
                                 <span class="font-medium text-slate-700">{{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }}</span>
                             @endif

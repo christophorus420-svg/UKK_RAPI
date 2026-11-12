@@ -150,9 +150,9 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                                 <span>Oleh: <strong>{{ $todayEv->user->fullname }}</strong></span>
-                                @if ($todayEv->session)
+                                @if ($todayEv->session_label)
                                     <span class="text-[10px] font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
-                                        {{ $todayEv->session->session_name }}
+                                        {{ $todayEv->session_label }}
                                     </span>
                                 @endif
                             </div>
@@ -320,9 +320,9 @@
                                         <div class="text-[11px] text-blue-600 font-medium">
                                             {{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }} WIB
                                         </div>
-                                        @if ($event->session)
+                                        @if ($event->session_label)
                                             <div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                <span>{{ $event->session->session_name }}</span>
+                                                <span>{{ $event->session_label }}</span>
                                             </div>
                                         @endif
                                     </td>
@@ -385,49 +385,87 @@
                                         @endif
                                     </td>
                                     <td class="p-4 text-right whitespace-nowrap">
-                                        <div class="inline-flex items-center gap-1.5">
-                                            <!-- Tombol Aksi Cepat Laporkan Masalah Fasilitas -->
-                                            @if (Auth::user()->isGuru() || Auth::user()->isAdmin())
-                                                <a href="{{ route('complaints.create', ['room_id' => $event->room_id, 'event_id' => $event->id]) }}"
-                                                    class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-xs"
-                                                    title="Buat pengaduan sarpras terkait ruangan dan agenda ini">
-                                                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                                    </svg>
-                                                    <span>Lapor Masalah</span>
-                                                </a>
-                                            @endif
-
-                                            <!-- Tombol Persetujuan Waka -->
-                                            @if (Auth::user()->isAdmin())
-                                                @if ($event->status === 'pending')
-                                                    <form method="POST" action="{{ route('events.approve', $event) }}" class="inline">
-                                                        @csrf
-                                                        <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition" title="Setujui Agenda">
-                                                            Setujui
-                                                        </button>
-                                                    </form>
-                                                    <button type="button"
-                                                        onclick="bukaModalTolak('{{ $event->id }}', '{{ addslashes($event->event_name) }}', '{{ addslashes($event->user->fullname) }}')"
-                                                        class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition" title="Tolak Pengajuan dengan Alasan Wajib">
-                                                        Tolak
-                                                    </button>
-                                                @elseif ($event->status === 'approved')
-                                                    <a href="{{ route('events.move-form', $event) }}"
-                                                        class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold transition" title="Hak Veto Waka: Pindahkan Ruangan Terpinjam">
-                                                        Pindah Ruang
+                                        <div class="inline-flex items-center justify-end gap-2">
+                                            <div class="flex flex-col items-stretch gap-1.5 min-w-[152px]">
+                                                <!-- 1. ATAS: Tombol Lapor Masalah Fasilitas -->
+                                                @if (Auth::user()->isGuru() || Auth::user()->isAdmin())
+                                                    <a href="{{ route('complaints.create', ['room_id' => $event->room_id, 'event_id' => $event->id]) }}"
+                                                        class="w-full justify-center px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-xs"
+                                                        title="Buat pengaduan sarpras terkait ruangan dan agenda ini">
+                                                        <svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                                        </svg>
+                                                        <span>Lapor Masalah</span>
                                                     </a>
+                                                @endif
+
+                                                <!-- 2. TENGAH: Persetujuan Waka / Pindah Ruang & Edit Peminjaman -->
+                                                @if (Auth::user()->isAdmin() && $event->status === 'pending')
+                                                    <div class="grid grid-cols-2 gap-1.5 w-full">
+                                                        <form method="POST" action="{{ route('events.approve', $event) }}" class="inline">
+                                                            @csrf
+                                                            <button type="submit" class="w-full px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition" title="Setujui Agenda">
+                                                                Setujui
+                                                            </button>
+                                                        </form>
+                                                        <button type="button"
+                                                            onclick="bukaModalTolak('{{ $event->id }}', '{{ addslashes($event->event_name) }}', '{{ addslashes($event->user->fullname) }}')"
+                                                            class="w-full px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition" title="Tolak Pengajuan dengan Alasan Wajib">
+                                                            Tolak
+                                                        </button>
+                                                    </div>
+                                                    @if ($event->canBeEditedBy(Auth::user()))
+                                                        <a href="{{ route('events.edit', $event) }}"
+                                                            class="w-full justify-center px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-xs"
+                                                            title="Edit Peminjaman Ruang &amp; Agenda">
+                                                            <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            </svg>
+                                                            <span>Edit Agenda</span>
+                                                        </a>
+                                                    @endif
+                                                @elseif (Auth::user()->isAdmin() && $event->status === 'approved')
+                                                    <div class="flex items-center gap-1.5 w-full">
+                                                        <a href="{{ route('events.move-form', $event) }}"
+                                                            class="flex-1 justify-center inline-flex items-center px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold transition" title="Hak Veto Waka: Pindahkan Ruangan Terpinjam">
+                                                            Pindah Ruang
+                                                        </a>
+                                                        @if ($event->canBeEditedBy(Auth::user()))
+                                                            <a href="{{ route('events.edit', $event) }}"
+                                                                class="shrink-0 inline-flex items-center gap-1 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold transition"
+                                                                title="Edit Peminjaman Ruang &amp; Agenda">
+                                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                                </svg>
+                                                                <span>Edit</span>
+                                                            </a>
+                                                        @endif
+                                                    </div>
+                                                @elseif ($event->canBeEditedBy(Auth::user()))
+                                                    <a href="{{ route('events.edit', $event) }}"
+                                                        class="w-full justify-center px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1 transition shadow-xs"
+                                                        title="Edit Peminjaman Ruang &amp; Agenda">
+                                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                        </svg>
+                                                        <span>Edit Agenda</span>
+                                                    </a>
+                                                @endif
+
+                                                <!-- 3. PALING BAWAH: Tombol Peringatan via WhatsApp -->
+                                                @if (Auth::user()->isAdmin() && $event->status === 'approved')
                                                     <x-whatsapp-button
                                                         :href="$event->whatsapp_move_warning_url"
                                                         label="Peringatkan WA"
                                                         size="xs"
+                                                        class="w-full justify-center"
                                                         title="Kirim Peringatan Perpindahan Ruangan via WhatsApp ke {{ $event->user->fullname }}" />
                                                 @endif
-                                            @endif
+                                            </div>
 
-                                            <!-- Tombol Batalkan untuk Pemohon (hanya jika pending) atau Admin -->
+                                            <!-- Tombol Batalkan / Hapus untuk Pemohon (hanya jika pending) atau Admin -->
                                             @if (Auth::user()->isAdmin() || ($event->pic_id === Auth::id() && $event->status === 'pending'))
-                                                <form method="POST" action="{{ route('events.destroy', $event) }}" class="inline"
+                                                <form method="POST" action="{{ route('events.destroy', $event) }}" class="inline shrink-0"
                                                     onsubmit="return confirm('Apakah Anda yakin ingin membatalkan agenda ini?');">
                                                     @csrf
                                                     @method('DELETE')

@@ -876,8 +876,8 @@
                                         </div>
                                         <div class="text-[11px] text-slate-400 mt-1">
                                             Pukul {{ substr($ev->start_time, 0, 5) }} - {{ substr($ev->end_time, 0, 5) }} WIB
-                                            @if ($ev->session)
-                                                <span class="text-indigo-600 font-bold ml-1">• {{ $ev->session->session_name }}</span>
+                                            @if ($ev->session_label)
+                                                <span class="text-indigo-600 font-bold ml-1">• {{ $ev->session_label }}</span>
                                             @endif
                                         </div>
                                     </div>

@@ -95,9 +95,10 @@ class ReportController extends Controller
 
                 $no = 1;
                 foreach ($data['events'] as $event) {
-                    $sessionLabel = $event->session
-                        ? $event->session->session_name . ' (' . substr($event->session->start_time, 0, 5) . ' - ' . substr($event->session->end_time, 0, 5) . ')'
-                        : substr($event->start_time, 0, 5) . ' - ' . substr($event->end_time, 0, 5);
+                    $timeRange = substr($event->start_time, 0, 5) . ' - ' . substr($event->end_time, 0, 5);
+                    $sessionLabel = $event->session_label
+                        ? "{$event->session_label} ({$timeRange})"
+                        : $timeRange;
 
                     $statusLabel = match ($event->status) {
                         'approved' => 'Disetujui',

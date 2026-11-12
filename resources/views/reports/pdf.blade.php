@@ -258,9 +258,9 @@
                         <td>{{ \Carbon\Carbon::parse($event->date)->translatedFormat('d/m/Y') }}</td>
                         <td><strong>{{ $event->room ? $event->room->room_name : '-' }}</strong></td>
                         <td>
-                            @if ($event->session)
-                                <strong>{{ $event->session->session_name }}</strong><br>
-                                <span style="color: #64748b;">{{ substr($event->session->start_time, 0, 5) }} - {{ substr($event->session->end_time, 0, 5) }}</span>
+                            @if ($event->session_label)
+                                <strong>{{ $event->session_label }}</strong><br>
+                                <span style="color: #64748b;">{{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }}</span>
                             @else
                                 {{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }}
                             @endif

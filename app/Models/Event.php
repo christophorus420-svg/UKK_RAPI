@@ -201,4 +201,142 @@ class Event extends Model
     {
         return $this->whatsappMoveUrl();
     }
+
+    /**
+     * Mengecek apakah pengguna berhak mengedit peminjaman ruangan & agenda ini.
+     * Admin selalu diizinkan; pemohon (guru/pic) diizinkan untuk agendanya sendiri
+     * selama agenda approved belum melewati waktu selesai (atau masih pending/rejected).
+     */
+    public function canBeEditedBy(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ((int) $this->pic_id !== (int) $user->id) {
+            return false;
+        }
+
+        if ($this->status === 'approved') {
+            $endDateStr = $this->end_date_resolved->toDateString();
+            $endDateTime = Carbon::parse("{$endDateStr} {$this->end_time}");
+
+            return !$endDateTime->isPast();
+        }
+
+        return true;
+    }
+
+    /**
+     * Mengambil daftar sesi pelajaran yang tercakup dalam rentang waktu event ini (mendukung multi-sesi).
+     *
+     * @return \Illuminate\Support\Collection<int, BookingSession>
+     */
+    public function getMatchedSessionsAttribute(): \Illuminate\Support\Collection
+    {
+        $evStart = substr((string) $this->start_time, 0, 5);
+        $evEnd = substr((string) $this->end_time, 0, 5);
+
+        $matched = BookingSession::where('is_active', true)
+            ->orderBy('start_time')
+            ->orderBy('id')
+            ->get()
+            ->filter(function (BookingSession $session) use ($evStart, $evEnd) {
+                $sStart = substr((string) $session->start_time, 0, 5);
+                $sEnd = substr((string) $session->end_time, 0, 5);
+
+                return $sStart < $evEnd && $sEnd > $evStart;
+            })
+            ->values();
+
+        if ($matched->isEmpty() && $this->session) {
+            return collect([$this->session]);
+        }
+
+        return $matched;
+    }
+
+    /**
+     * Daftar ID sesi yang sesuai dengan rentang waktu agenda (untuk pre-fill form edit multi-sesi).
+     *
+     * @return array<int, int>
+     */
+    public function getMatchedSessionIdsAttribute(): array
+    {
+        $ids = $this->matched_sessions->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        if (empty($ids) && $this->session_id) {
+            return [(int) $this->session_id];
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Label tampilan sesi ringkas (1 sesi atau rentang multi-sesi seperti "Sesi 1 s.d. Sesi 3").
+     */
+    public function getSessionLabelAttribute(): ?string
+    {
+        $matched = $this->matched_sessions;
+
+        if ($matched->isEmpty()) {
+            return $this->session?->session_name;
+        }
+
+        if ($matched->count() === 1) {
+            return $matched->first()->session_name;
+        }
+
+        return "{$matched->first()->session_name} s.d. {$matched->last()->session_name}";
+    }
+
+    /**
+     * Pencarian jadwal bentrok tunggal yang digunakan ulang oleh validasi store, update, approve, dan AJAX cek ketersediaan.
+     *
+     * @param  array<int, string>  $statuses
+     */
+    public static function findConflict(
+        int $roomId,
+        string $startDate,
+        ?string $endDate,
+        string $startTime,
+        string $endTime,
+        ?int $sessionId = null,
+        ?int $excludeEventId = null,
+        array $statuses = ['approved', 'pending']
+    ): ?self {
+        $effectiveEndDate = $endDate ?: $startDate;
+        $normalizedStart = strlen($startTime) === 5 ? "{$startTime}:00" : $startTime;
+        $normalizedEnd = strlen($endTime) === 5 ? "{$endTime}:00" : $endTime;
+
+        $query = self::with('session')
+            ->where('room_id', $roomId)
+            ->whereIn('status', $statuses)
+            ->where(function ($q) use ($startDate, $effectiveEndDate) {
+                $q->where('date', '<=', $effectiveEndDate)
+                  ->whereRaw('COALESCE(end_date, date) >= ?', [$startDate]);
+            })
+            ->where(function ($q) use ($normalizedStart, $normalizedEnd, $sessionId) {
+                if ($sessionId) {
+                    $q->where('session_id', $sessionId)
+                      ->orWhere(function ($sub) use ($normalizedStart, $normalizedEnd) {
+                          $sub->where('start_time', '<', $normalizedEnd)
+                              ->where('end_time', '>', $normalizedStart);
+                      });
+                } else {
+                    $q->where('start_time', '<', $normalizedEnd)
+                        ->where('end_time', '>', $normalizedStart);
+                }
+            });
+
+        if ($excludeEventId) {
+            $query->where('id', '!=', $excludeEventId);
+        }
+
+        return $query->first();
+    }
 }

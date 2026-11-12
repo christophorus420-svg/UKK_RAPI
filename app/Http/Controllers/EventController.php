@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MoveRoomRequest;
 use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
 use App\Models\BookingSession;
 use App\Models\Event;
 use App\Models\Room;
@@ -109,33 +110,91 @@ class EventController extends Controller
 
         $status = $user->isAdmin() ? 'approved' : 'pending';
         $approvedBy = $user->isAdmin() ? $user->id : null;
-
-        $session = $request->filled('session_id') ? BookingSession::find($request->session_id) : null;
-        $startTime = $session ? substr($session->start_time, 0, 5) : $request->start_time;
-        $endTime = $session ? substr($session->end_time, 0, 5) : $request->end_time;
         $endDate = $request->filled('end_date') ? $request->end_date : null;
+        $blocks = $request->resolvedScheduleBlocks();
 
-        $event = Event::create([
-            'room_id' => $request->room_id,
-            'session_id' => $session?->id,
-            'pic_id' => $user->id,
-            'event_name' => $request->event_name,
-            'date' => $request->date,
-            'end_date' => $endDate,
-            'start_time' => $startTime,
-            'end_time' => $endTime,
-            'status' => $status,
-            'approved_by' => $approvedBy,
-            'move_reason' => null,
-        ]);
+        $createdCount = 0;
+        $eventName = (string) $request->event_name;
+
+        foreach ($blocks as $block) {
+            Event::create([
+                'room_id' => $request->room_id,
+                'session_id' => $block['session_id'],
+                'pic_id' => $user->id,
+                'event_name' => $eventName,
+                'date' => $request->date,
+                'end_date' => $endDate,
+                'start_time' => $block['start_time'],
+                'end_time' => $block['end_time'],
+                'status' => $status,
+                'approved_by' => $approvedBy,
+                'move_reason' => null,
+            ]);
+            $createdCount++;
+        }
+
+        if ($createdCount > 1) {
+            $pesanStatus = $status === 'approved'
+                ? "Sebanyak {$createdCount} blok sesi untuk agenda '{$eventName}' berhasil dijadwalkan dan langsung disetujui oleh Waka."
+                : "Sebanyak {$createdCount} blok sesi pengajuan agenda '{$eventName}' berhasil dikirim dan sedang menunggu persetujuan Waka Sarpras.";
+
+            return redirect()->route('events.index')->with('success', $pesanStatus);
+        }
 
         if ($status === 'approved') {
             return redirect()->route('events.index')
-                ->with('success', "Agenda '{$event->event_name}' berhasil dijadwalkan dan langsung disetujui oleh Waka.");
+                ->with('success', "Agenda '{$eventName}' berhasil dijadwalkan dan langsung disetujui oleh Waka.");
         }
 
         return redirect()->route('events.index')
-            ->with('success', "Pengajuan agenda '{$event->event_name}' berhasil dikirim dan sedang menunggu persetujuan Waka Sarpras.");
+            ->with('success', "Pengajuan agenda '{$eventName}' berhasil dikirim dan sedang menunggu persetujuan Waka Sarpras.");
+    }
+
+    public function edit(Event $event): View|RedirectResponse
+    {
+        if (!$event->canBeEditedBy(Auth::user())) {
+            return redirect()->route('events.index')
+                ->with('error', 'Anda tidak memiliki hak untuk mengedit agenda ini.');
+        }
+
+        $rooms = Room::where('is_active', true)->orderBy('room_name')->get();
+        $sessions = BookingSession::where('is_active', true)->orderBy('start_time')->get();
+
+        return view('events.edit', compact('event', 'rooms', 'sessions'));
+    }
+
+    public function update(UpdateEventRequest $request, Event $event): RedirectResponse
+    {
+        $user = Auth::user();
+        $block = $request->resolvedScheduleBlocks()[0];
+        $endDate = $request->filled('end_date') ? $request->end_date : null;
+        $roomChanged = (int) $event->room_id !== (int) $request->room_id;
+
+        $wasApprovedByNonAdmin = !$user->isAdmin() && $event->status === 'approved';
+        $status = $user->isAdmin() ? $event->status : 'pending';
+        $approvedBy = $user->isAdmin() ? $event->approved_by : null;
+
+        $event->update([
+            'room_id' => $request->room_id,
+            'session_id' => $block['session_id'],
+            'event_name' => $request->event_name,
+            'date' => $request->date,
+            'end_date' => $endDate,
+            'start_time' => $block['start_time'],
+            'end_time' => $block['end_time'],
+            'status' => $status,
+            'approved_by' => $approvedBy,
+            'alasan_penolakan' => $user->isAdmin() ? $event->alasan_penolakan : null,
+            'move_reason' => $roomChanged ? null : $event->move_reason,
+        ]);
+
+        if ($wasApprovedByNonAdmin) {
+            return redirect()->route('events.index')
+                ->with('success', "Perubahan agenda '{$event->event_name}' berhasil disimpan dan diajukan kembali untuk persetujuan Waka Sarpras.");
+        }
+
+        return redirect()->route('events.index')
+            ->with('success', "Peminjaman ruang & agenda '{$event->event_name}' berhasil diperbarui.");
     }
 
     public function approve(Event $event): RedirectResponse
@@ -144,30 +203,17 @@ class EventController extends Controller
             return back()->with('error', 'Hanya Waka Sarpras / Admin yang berwenang menyetujui agenda.');
         }
 
-        $startDate = $event->date->toDateString();
-        $endDate = ($event->end_date ?? $event->date)->toDateString();
-
         // Validasi tabrakan ulang terhadap agenda lain yang sudah disetujui (mencegah race condition)
-        $conflictingEvent = Event::where('room_id', $event->room_id)
-            ->where('id', '!=', $event->id)
-            ->where('status', 'approved')
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->where('date', '<=', $endDate)
-                  ->whereRaw('COALESCE(end_date, date) >= ?', [$startDate]);
-            })
-            ->where(function ($q) use ($event) {
-                if ($event->session_id) {
-                    $q->where('session_id', $event->session_id)
-                      ->orWhere(function ($sub) use ($event) {
-                          $sub->where('start_time', '<', $event->end_time)
-                              ->where('end_time', '>', $event->start_time);
-                      });
-                } else {
-                    $q->where('start_time', '<', $event->end_time)
-                      ->where('end_time', '>', $event->start_time);
-                }
-            })
-            ->first();
+        $conflictingEvent = Event::findConflict(
+            roomId: (int) $event->room_id,
+            startDate: $event->date->toDateString(),
+            endDate: $event->end_date?->toDateString(),
+            startTime: (string) $event->start_time,
+            endTime: (string) $event->end_time,
+            sessionId: $event->session_id,
+            excludeEventId: $event->id,
+            statuses: ['approved']
+        );
 
         if ($conflictingEvent) {
             $jamMulai = substr($conflictingEvent->start_time, 0, 5);
@@ -224,7 +270,7 @@ class EventController extends Controller
     }
 
     /**
-     * Endpoint API JSON untuk pengecekan ketersediaan jadwal secara real-time via AJAX (mendukung multi-day)
+     * Endpoint API JSON untuk pengecekan ketersediaan jadwal secara real-time via AJAX (mendukung multi-day & multi-sesi)
      */
     public function checkAvailability(Request $request): JsonResponse
     {
@@ -232,68 +278,94 @@ class EventController extends Controller
             'room_id' => 'required|integer|exists:rooms,id',
             'date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:date',
+            'session_ids' => 'nullable|array',
+            'session_ids.*' => 'integer|exists:booking_sessions,id',
             'session_id' => 'nullable|integer|exists:booking_sessions,id',
             'start_time' => 'nullable',
             'end_time' => 'nullable',
             'exclude_event_id' => 'nullable|integer',
         ]);
 
-        $session = null;
-        if ($request->filled('session_id')) {
+        $startDate = (string) $request->date;
+        $endDate = $request->filled('end_date') ? (string) $request->end_date : null;
+        $excludeEventId = $request->filled('exclude_event_id') ? (int) $request->exclude_event_id : null;
+
+        $blocks = [];
+        $sessionIds = array_filter((array) $request->input('session_ids', []), fn ($id) => is_numeric($id));
+
+        if (!empty($sessionIds)) {
+            $grouped = BookingSession::groupContiguousIds($sessionIds);
+            foreach ($grouped as $block) {
+                $blocks[] = [
+                    'session_id' => $block['session_id'],
+                    'start_time' => $block['start_time'],
+                    'end_time' => $block['end_time'],
+                ];
+            }
+        } elseif ($request->filled('session_id')) {
             $session = BookingSession::find($request->session_id);
+            if ($session) {
+                $blocks[] = [
+                    'session_id' => $session->id,
+                    'start_time' => substr((string) $session->start_time, 0, 5),
+                    'end_time' => substr((string) $session->end_time, 0, 5),
+                ];
+            }
+        } elseif ($request->filled('start_time') && $request->filled('end_time')) {
+            $blocks[] = [
+                'session_id' => null,
+                'start_time' => (string) $request->start_time,
+                'end_time' => (string) $request->end_time,
+            ];
         }
 
-        $startTime = $session ? substr($session->start_time, 0, 5) : $request->start_time;
-        $endTime = $session ? substr($session->end_time, 0, 5) : $request->end_time;
-        $startDate = $request->date;
-        $endDate = $request->filled('end_date') ? $request->end_date : $request->date;
-
-        if (!$startTime || !$endTime) {
+        if (empty($blocks)) {
             return response()->json([
                 'available' => false,
-                'message' => 'Silakan tentukan sesi atau jam peminjaman.',
+                'message' => 'Silakan pilih minimal satu sesi atau tentukan jam peminjaman.',
             ]);
         }
 
-        $query = Event::where('room_id', $request->room_id)
-            ->whereIn('status', ['approved', 'pending'])
-            ->where(function ($q) use ($startDate, $endDate) {
-                $q->where('date', '<=', $endDate)
-                  ->whereRaw('COALESCE(end_date, date) >= ?', [$startDate]);
-            });
-
-        if ($session) {
-            $query->where(function ($q) use ($session) {
-                $q->where('session_id', $session->id)
-                  ->orWhere(function ($sub) use ($session) {
-                      $sub->where('start_time', '<', $session->end_time)
-                          ->where('end_time', '>', $session->start_time);
-                  });
-            });
-        } else {
-            $query->where('start_time', '<', $endTime)
-                  ->where('end_time', '>', $startTime);
-        }
-
-        if ($request->filled('exclude_event_id')) {
-            $query->where('id', '!=', $request->exclude_event_id);
-        }
-
-        $conflicting = $query->first();
-
-        if ($conflicting) {
-            $labelSesi = $conflicting->session ? " ({$conflicting->session->session_name})" : '';
-            $rentangTgl = $conflicting->formatted_date_range;
+        if ($excludeEventId && count($blocks) > 1) {
             return response()->json([
                 'available' => false,
-                'message' => "Jadwal bentrok dengan kegiatan '{$conflicting->event_name}' ({$rentangTgl}){$labelSesi} (" . substr($conflicting->start_time, 0, 5) . " - " . substr($conflicting->end_time, 0, 5) . " WIB)",
-                'conflict' => $conflicting,
+                'is_gap_warning' => true,
+                'message' => 'Untuk mengedit satu agenda, pilih beberapa sesi yang berurutan tanpa melewati sesi di tengahnya.',
             ]);
         }
+
+        foreach ($blocks as $block) {
+            $conflicting = Event::findConflict(
+                roomId: (int) $request->room_id,
+                startDate: $startDate,
+                endDate: $endDate,
+                startTime: $block['start_time'],
+                endTime: $block['end_time'],
+                sessionId: $block['session_id'],
+                excludeEventId: $excludeEventId
+            );
+
+            if ($conflicting) {
+                $sessionLabel = $conflicting->session_label;
+                $labelSesi = $sessionLabel ? " ({$sessionLabel})" : '';
+                $rentangTgl = $conflicting->formatted_date_range;
+
+                return response()->json([
+                    'available' => false,
+                    'message' => "Jadwal bentrok dengan kegiatan '{$conflicting->event_name}' ({$rentangTgl}){$labelSesi} (" . substr((string) $conflicting->start_time, 0, 5) . ' - ' . substr((string) $conflicting->end_time, 0, 5) . ' WIB)',
+                    'conflict' => $conflicting,
+                ]);
+            }
+        }
+
+        $totalSessions = count($sessionIds);
+        $pesanTersedia = $totalSessions > 1
+            ? "Jadwal {$totalSessions} sesi terpilih tersedia untuk dipinjam!"
+            : 'Ruangan dan jadwal rentang waktu tersebut tersedia untuk dipinjam!';
 
         return response()->json([
             'available' => true,
-            'message' => 'Ruangan dan jadwal rentang waktu tersebut tersedia untuk dipinjam!',
+            'message' => $pesanTersedia,
         ]);
     }
 

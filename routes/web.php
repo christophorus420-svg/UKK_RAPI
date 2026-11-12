@@ -51,6 +51,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/agenda', [EventController::class, 'index'])->name('events.index');
     Route::get('/agenda/ajukan', [EventController::class, 'create'])->name('events.create');
     Route::post('/agenda', [EventController::class, 'store'])->name('events.store');
+    Route::get('/agenda/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
+    Route::put('/agenda/{event}', [EventController::class, 'update'])->name('events.update');
     Route::delete('/agenda/{event}', [EventController::class, 'destroy'])->name('events.destroy');
     Route::get('/api/cek-ketersediaan-ruang', [EventController::class, 'checkAvailability'])->name('events.check-availability');
 
