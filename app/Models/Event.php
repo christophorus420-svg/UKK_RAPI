@@ -136,4 +136,69 @@ class Event extends Model
 
         return $now->betweenIncluded($startDateTime, $endDateTime);
     }
+
+    /**
+     * Menyusun teks pesan WhatsApp peringatan atau pemberitahuan perpindahan ruangan untuk peminjam
+     */
+    public function buildWhatsappMoveMessage(?string $oldRoomName = null): string
+    {
+        $namaGuru = $this->user?->fullname ?? 'Bpk/Ibu Guru Peminjam';
+        $namaRuang = $this->room?->room_name ?? 'Ruangan Sekolah';
+        $lokasiRuang = $this->room?->location;
+        $ruangLengkap = $lokasiRuang ? "{$namaRuang} ({$lokasiRuang})" : $namaRuang;
+
+        $tanggalPeminjaman = Carbon::parse($this->date)->translatedFormat('l, d F Y');
+        if ($this->isMultiDay()) {
+            $tanggalPeminjaman .= ' s/d ' . Carbon::parse($this->end_date)->translatedFormat('l, d F Y');
+        }
+
+        $jamMulai = substr((string) $this->start_time, 0, 5);
+        $jamSelesai = substr((string) $this->end_time, 0, 5);
+
+        if (!empty($this->move_reason) || !empty($oldRoomName)) {
+            $barisRuang = $oldRoomName
+                ? "• Perpindahan Ruangan: dari {$oldRoomName} ke {$ruangLengkap}"
+                : "• Ruangan Pengganti / Baru: {$ruangLengkap}";
+
+            $alasan = !empty($this->move_reason)
+                ? $this->move_reason
+                : 'Penyesuaian kebutuhan mendesak sekolah';
+
+            return "Yth. Bpk/Ibu {$namaGuru},\n\n"
+                . "*PERINGATAN PERPINDAHAN RUANGAN (RAPI-SEKOLAH)*\n"
+                . "Peminjaman ruangan Anda mengalami pemindahan ruangan oleh Waka Sarpras:\n"
+                . "• Agenda/Kegiatan: \"{$this->event_name}\"\n"
+                . "• Tanggal & Waktu: {$tanggalPeminjaman} (pukul {$jamMulai} - {$jamSelesai} WIB)\n"
+                . "{$barisRuang}\n"
+                . "• Alasan Pemindahan: \"{$alasan}\"\n\n"
+                . "Mohon menyesuaikan lokasi kegiatan ke ruangan pengganti tersebut dan memeriksa detail jadwal pada sistem RAPI-Sekolah.\n\n"
+                . "Terima kasih.\n"
+                . "- Waka Sarana & Prasarana Sekolah";
+        }
+
+        return "Yth. Bpk/Ibu {$namaGuru},\n\n"
+            . "*PERINGATAN PERPINDAHAN RUANGAN (RAPI-SEKOLAH)*\n"
+            . "Terdapat pemberitahuan rencana pemindahan/penyesuaian ruangan untuk peminjaman Anda oleh Waka Sarpras:\n"
+            . "• Agenda/Kegiatan: \"{$this->event_name}\"\n"
+            . "• Tanggal & Waktu: {$tanggalPeminjaman} (pukul {$jamMulai} - {$jamSelesai} WIB)\n"
+            . "• Ruangan Saat Ini: {$ruangLengkap}\n\n"
+            . "Mohon kesediaannya untuk berkoordinasi dengan Waka Sarpras dan memantau pembaruan ruangan pengganti di sistem RAPI-Sekolah.\n\n"
+            . "Terima kasih.\n"
+            . "- Waka Sarana & Prasarana Sekolah";
+    }
+
+    /**
+     * Menghasilkan URL direct WhatsApp API (wa.me) untuk peringatan perpindahan ruangan ke peminjam
+     */
+    public function whatsappMoveUrl(?string $oldRoomName = null): string
+    {
+        $nomorWa = $this->user?->whatsapp_number ?? '6281234567890';
+
+        return "https://wa.me/{$nomorWa}?text=" . rawurlencode($this->buildWhatsappMoveMessage($oldRoomName));
+    }
+
+    public function getWhatsappMoveWarningUrlAttribute(): string
+    {
+        return $this->whatsappMoveUrl();
+    }
 }

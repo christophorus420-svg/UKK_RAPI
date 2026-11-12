@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Event;
 use App\Models\Room;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -36,20 +35,9 @@ class WhatsAppService
             return false;
         }
 
+        $event->setRelation('room', $newRoom);
         $targetWa = $user->whatsapp_number;
-        $tanggalPeminjaman = Carbon::parse($event->date)->translatedFormat('l, d F Y');
-        $jamMulai = substr((string) $event->start_time, 0, 5);
-        $jamSelesai = substr((string) $event->end_time, 0, 5);
-
-        $pesan = "Halo {$user->fullname},\n\n"
-            . "Peminjaman Anda untuk agenda \"{$event->event_name}\" pada {$tanggalPeminjaman} (pukul {$jamMulai} - {$jamSelesai} WIB) telah dipindahkan dari {$oldRoomName} ke {$newRoom->room_name}.\n\n";
-
-        if (!empty($event->move_reason)) {
-            $pesan .= "Alasan pemindahan: {$event->move_reason}\n\n";
-        }
-
-        $pesan .= "Mohon menyesuaikan. Terima kasih.\n"
-            . "- Pengelola Sarpras " . config('app.name', 'Sekolah');
+        $pesan = $event->buildWhatsappMoveMessage($oldRoomName);
 
         return $this->sendMessage($targetWa, $pesan);
     }

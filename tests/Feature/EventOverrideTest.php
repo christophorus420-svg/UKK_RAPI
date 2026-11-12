@@ -240,9 +240,81 @@ class EventOverrideTest extends TestCase
         // Perpindahan tetap berhasil di database
         $response->assertRedirect('/agenda');
         $response->assertSessionHas('success');
+        $response->assertSessionHas('whatsapp_move_url');
         $this->assertDatabaseHas('events', [
             'id' => $event->id,
             'room_id' => $this->room2->id,
         ]);
+    }
+
+    public function test_dashboard_admin_menampilkan_button_peringatan_perpindahan_ruangan_via_wa(): void
+    {
+        $this->guru->update(['phone_number' => '081299887766']);
+
+        $movedEvent = Event::create([
+            'room_id' => $this->room2->id,
+            'pic_id' => $this->guru->id,
+            'event_name' => 'Rapat Evaluasi Kurikulum',
+            'date' => $this->testDate,
+            'start_time' => '09:00:00',
+            'end_time' => '11:00:00',
+            'status' => 'approved',
+            'approved_by' => $this->admin->id,
+            'move_reason' => 'Lab 1 digunakan ujian praktik kejuruan.',
+        ]);
+
+        // Verifikasi URL WA pada model Event
+        $waUrl = $movedEvent->whatsapp_move_warning_url;
+        $this->assertStringStartsWith('https://wa.me/6281299887766?text=', $waUrl);
+        $parsedUrl = parse_url($waUrl);
+        parse_str($parsedUrl['query'], $query);
+        $this->assertStringContainsString('Rapat Evaluasi Kurikulum', $query['text']);
+        $this->assertStringContainsString('Lab 1 digunakan ujian praktik kejuruan.', $query['text']);
+        $this->assertStringContainsString($this->room2->room_name, $query['text']);
+        $this->assertStringContainsString($this->guru->fullname, $query['text']);
+
+        // Verifikasi tampil di Dashboard Admin
+        $response = $this->actingAs($this->admin)->get('/dashboard');
+        $response->assertStatus(200);
+        $response->assertSee('Peringatan Perpindahan Ruangan ke Guru');
+        $response->assertSee('Peringatkan Guru via WhatsApp');
+        $response->assertSee('Rapat Evaluasi Kurikulum');
+        $response->assertSee('https://wa.me/6281299887766', false);
+
+        // Verifikasi guru tidak melihat card admin tersebut
+        $responseGuru = $this->actingAs($this->guru)->get('/dashboard');
+        $responseGuru->assertStatus(200);
+        $responseGuru->assertDontSee('Peringatan Perpindahan Ruangan ke Guru');
+    }
+
+    public function test_url_peringatan_wa_pra_pemindahan_dan_halaman_agenda_untuk_admin(): void
+    {
+        $this->guru->update(['phone_number' => '081299887766']);
+
+        $event = Event::create([
+            'room_id' => $this->room1->id,
+            'pic_id' => $this->guru->id,
+            'event_name' => 'Seminar Persiapan PKL',
+            'date' => $this->testDate,
+            'start_time' => '08:00:00',
+            'end_time' => '10:00:00',
+            'status' => 'approved',
+        ]);
+
+        // Pre-move warning message
+        $parsedUrl = parse_url($event->whatsapp_move_warning_url);
+        parse_str($parsedUrl['query'], $query);
+        $this->assertStringContainsString('Seminar Persiapan PKL', $query['text']);
+        $this->assertStringContainsString($this->room1->room_name, $query['text']);
+
+        // Tampil di halaman agenda untuk admin, tidak untuk guru
+        $responseAdmin = $this->actingAs($this->admin)->get('/agenda');
+        $responseAdmin->assertStatus(200);
+        $responseAdmin->assertSee('Peringatkan WA');
+        $responseAdmin->assertSee('https://wa.me/6281299887766', false);
+
+        $responseGuru = $this->actingAs($this->guru)->get('/agenda');
+        $responseGuru->assertStatus(200);
+        $responseGuru->assertDontSee('Peringatkan WA');
     }
 }

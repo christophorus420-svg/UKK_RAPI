@@ -39,7 +39,7 @@ class DashboardController extends Controller
             // REVISI ADMIN 3: Widget Ruang Kosong Saat Ini (Real-Time Availability)
             $activeRooms = Room::with('pic')->where('is_active', true)->orderBy('room_name')->get();
 
-            $ongoingEvents = Event::with(['user', 'session'])
+            $ongoingEvents = Event::with(['user', 'session', 'room'])
                 ->where('status', 'approved')
                 ->where('date', '<=', $todayStr)
                 ->whereRaw('COALESCE(end_date, date) >= ?', [$todayStr])
@@ -88,9 +88,16 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
 
-            $data['agendaMendatang'] = Event::with(['room', 'user'])
+            $data['daftarAgendaDipindahkan'] = Event::with(['room', 'user', 'approver'])
                 ->where('status', 'approved')
-                ->whereDate('date', '>=', $today)
+                ->whereNotNull('move_reason')
+                ->latest('updated_at')
+                ->take(5)
+                ->get();
+
+            $data['agendaMendatang'] = Event::with(['room', 'user', 'approver'])
+                ->where('status', 'approved')
+                ->whereRaw('COALESCE(end_date, date) >= ?', [$todayStr])
                 ->orderBy('date')
                 ->orderBy('start_time')
                 ->take(5)

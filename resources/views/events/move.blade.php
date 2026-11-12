@@ -27,6 +27,14 @@
                 <div><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($event->date)->translatedFormat('l, d F Y') }}</div>
                 <div><strong>Waktu:</strong> {{ substr($event->start_time, 0, 5) }} - {{ substr($event->end_time, 0, 5) }} WIB</div>
                 <div><strong>Ruang Saat Ini:</strong> <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold border border-rose-200">{{ $event->room->room_name }}</span></div>
+                <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-2 pt-2 mt-1 border-t border-slate-200/80">
+                    <span><strong>No. WhatsApp Pemohon:</strong> {{ $event->user->phone_number ?: 'Belum diatur (gunakan nomor fallback)' }}</span>
+                    <x-whatsapp-button
+                        :href="$event->whatsapp_move_warning_url"
+                        label="Peringatkan Pemohon via WA"
+                        size="xs"
+                        title="Kirim pesan WhatsApp peringatan perpindahan ruangan ke {{ $event->user->fullname }}" />
+                </div>
             </div>
         </div>
 

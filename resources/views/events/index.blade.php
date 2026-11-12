@@ -417,6 +417,11 @@
                                                         class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold transition" title="Hak Veto Waka: Pindahkan Ruangan Terpinjam">
                                                         Pindah Ruang
                                                     </a>
+                                                    <x-whatsapp-button
+                                                        :href="$event->whatsapp_move_warning_url"
+                                                        label="Peringatkan WA"
+                                                        size="xs"
+                                                        title="Kirim Peringatan Perpindahan Ruangan via WhatsApp ke {{ $event->user->fullname }}" />
                                                 @endif
                                             @endif
 

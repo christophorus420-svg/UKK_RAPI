@@ -333,6 +333,8 @@ class EventController extends Controller
         }
 
         return redirect()->route('events.index')
-            ->with('success', "Hak veto Waka berhasil dijalankan: Agenda '{$event->event_name}' dipindahkan dari '{$ruangLama}' ke '{$ruangBaru->room_name}'. Notifikasi alasan pemindahan telah dicatat dan dikirimkan ke peminjam ({$event->user->fullname}).");
+            ->with('success', "Hak veto Waka berhasil dijalankan: Agenda '{$event->event_name}' dipindahkan dari '{$ruangLama}' ke '{$ruangBaru->room_name}'. Notifikasi alasan pemindahan telah dicatat dan dikirimkan ke peminjam ({$event->user->fullname}).")
+            ->with('whatsapp_move_url', $event->whatsappMoveUrl($ruangLama))
+            ->with('whatsapp_move_target', $event->user->fullname);
     }
 }

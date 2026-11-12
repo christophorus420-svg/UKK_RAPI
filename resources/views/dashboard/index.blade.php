@@ -317,6 +317,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                                     </svg>
                                 </a>
+                                <x-whatsapp-button
+                                    :href="$sr->active_event->whatsapp_move_warning_url"
+                                    label="Peringatkan Pindah Ruang (WA)"
+                                    size="full"
+                                    title="Kirim peringatan perpindahan ruangan via WhatsApp ke {{ $sr->active_event->user->fullname }}" />
                             </div>
                         </div>
                     @endif
@@ -454,6 +459,115 @@
                                 <a href="{{ route('events.index') }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xs transition">
                                     Tinjau
                                 </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+        </div>
+
+        <!-- DASHBOARD WAKA/ADMIN: PERINGATAN PERPINDAHAN RUANGAN VIA WHATSAPP KE GURU PEMINJAM -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Card Agenda Dipindahkan Waka -> Peringatkan Guru via WhatsApp -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Peringatan Perpindahan Ruangan ke Guru</h2>
+                        <p class="text-xs text-slate-500">Agenda terpinjam yang dipindahkan — kirim peringatan via WhatsApp ke guru peminjam</p>
+                    </div>
+                    <span class="shrink-0 px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg">
+                        {{ $daftarAgendaDipindahkan->count() }} Agenda Dipindah
+                    </span>
+                </div>
+
+                @if ($daftarAgendaDipindahkan->isEmpty())
+                    <div class="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        Belum ada agenda peminjaman ruangan yang dipindahkan oleh Waka.
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($daftarAgendaDipindahkan as $agendaPindah)
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="space-y-1 flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="font-bold text-slate-900 text-sm">{{ $agendaPindah->event_name }}</span>
+                                        <span class="px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold text-[11px] border border-purple-200">
+                                            Ruang: {{ $agendaPindah->room->room_name }}
+                                        </span>
+                                    </div>
+                                    <div class="text-slate-600">
+                                        {{ $agendaPindah->formatted_date_range }} • {{ substr($agendaPindah->start_time, 0, 5) }} - {{ substr($agendaPindah->end_time, 0, 5) }} WIB
+                                    </div>
+                                    <div class="text-[11px] text-slate-500">
+                                        Peminjam: <strong class="text-slate-700">{{ $agendaPindah->user->fullname }}</strong>
+                                        @if ($agendaPindah->user->phone_number)
+                                            <span>({{ $agendaPindah->user->phone_number }})</span>
+                                        @endif
+                                    </div>
+                                    <div class="mt-1 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+                                        <strong>Alasan:</strong> "{{ $agendaPindah->move_reason }}"
+                                    </div>
+                                </div>
+                                <x-whatsapp-button
+                                    :href="$agendaPindah->whatsapp_move_warning_url"
+                                    label="Peringatkan Guru via WhatsApp"
+                                    title="Kirim Peringatan Perpindahan Ruangan via WhatsApp ke {{ $agendaPindah->user->fullname }}" />
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            <!-- Card Daftar Guru Peminjam Ruangan (Aktif & Mendatang) -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Peminjaman Ruangan Guru (Mendatang)</h2>
+                        <p class="text-xs text-slate-500">Pindahkan ruangan atau kirim peringatan perpindahan via WhatsApp</p>
+                    </div>
+                    <a href="{{ route('events.index') }}" class="shrink-0 text-xs text-blue-600 hover:text-blue-800 font-semibold">
+                        Kelola Agenda
+                    </a>
+                </div>
+
+                @if ($agendaMendatang->isEmpty())
+                    <div class="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        Tidak ada agenda peminjaman ruangan yang sedang atau akan berlangsung.
+                    </div>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($agendaMendatang as $agenda)
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div class="space-y-0.5 flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="font-bold text-slate-900">{{ $agenda->event_name }}</span>
+                                        @if ($agenda->move_reason)
+                                            <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold text-[10px] border border-amber-200">
+                                                Dipindahkan
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <div class="text-slate-600">
+                                        {{ $agenda->room->room_name }} • {{ $agenda->formatted_date_range }} ({{ substr($agenda->start_time, 0, 5) }} - {{ substr($agenda->end_time, 0, 5) }} WIB)
+                                    </div>
+                                    <div class="text-[11px] text-slate-400">
+                                        Pemohon: <strong class="text-slate-700">{{ $agenda->user->fullname }}</strong>
+                                    </div>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                                    <a href="{{ route('events.move-form', $agenda) }}"
+                                        class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-semibold transition"
+                                        title="Hak Veto Waka: Pindahkan Ruangan Terpinjam">
+                                        Pindah Ruang
+                                    </a>
+                                    <x-whatsapp-button
+                                        :href="$agenda->whatsapp_move_warning_url"
+                                        label="Peringatkan via WA"
+                                        size="xs"
+                                        title="Kirim Peringatan Perpindahan Ruangan via WhatsApp ke {{ $agenda->user->fullname }}" />
+                                </div>
                             </div>
                         @endforeach
                     </div>
